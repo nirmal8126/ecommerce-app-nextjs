@@ -1,0 +1,83 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(USER)
+  products  Product[] // if merchant
+  orders    Order[]
+  ratings   Rating[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id          Int                @id @default(autoincrement())
+  merchant    User               @relation(fields: [merchantId], references: [id])
+  merchantId  Int
+  name        String
+  description String
+  price       Float
+  stock       Int
+  category    String
+  images      String
+  offer       Float?
+  variations  ProductVariation[]
+  ratings     Rating[]
+  orderItems  OrderItem[] // 👈 add this line
+  createdAt   DateTime           @default(now())
+}
+
+model ProductVariation {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  type      String // e.g. "size" or "color"
+  value     String // e.g. "XL" or "Red"
+  stock     Int
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    Int
+  total     Float
+  status    String      @default("pending")
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  price     Float
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  MERCHANT
+  ADMIN
+}
