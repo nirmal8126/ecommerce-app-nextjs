@@ -19,6 +19,15 @@ model User {
   createdAt DateTime  @default(now())
 }
 
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  image     String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Product {
   id          Int                @id @default(autoincrement())
   merchant    User               @relation(fields: [merchantId], references: [id])
@@ -27,13 +36,15 @@ model Product {
   description String
   price       Float
   stock       Int
-  category    String
   images      String
   offer       Float?
   variations  ProductVariation[]
   ratings     Rating[]
-  orderItems  OrderItem[] // 👈 add this line
+  orderItems  OrderItem[] // relation to orders
+  categoryId  Int
+  category    Category           @relation(fields: [categoryId], references: [id])
   createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 model ProductVariation {
