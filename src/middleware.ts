@@ -1,33 +1,45 @@
+// src/middleware.ts
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    // Example: Only allow merchants to access /dashboard/merchant
+    const token = req.nextauth.token;
+
+    // Not logged in at all
+    if (!token) {
+      return NextResponse.redirect(new URL("/auth/login", req.url));
+    }
+
+    // Merchant-only routes
     if (
       req.nextUrl.pathname.startsWith("/dashboard/merchant") &&
-      req.nextauth.token?.role !== "MERCHANT"
+      token.role !== "MERCHANT"
     ) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
 
-    // Example: Only allow normal users to access /dashboard/user
+    // User-only routes
     if (
       req.nextUrl.pathname.startsWith("/dashboard/user") &&
-      req.nextauth.token?.role !== "USER"
+      token.role !== "USER"
     ) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
+
+    // ✅ Allow request if checks passed
+    return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token, // block all routes if not logged in
+      authorized: ({ token }) => !!token, // block if not logged in
     },
   }
 );
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", // protect all /dashboard routes
+    "/dashboard/:path*", // protect all dashboard routes
+    "/api/products/:path*",
   ],
 };
